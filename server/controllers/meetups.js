@@ -1,5 +1,9 @@
 const Meetup = require('../models/meetups');
 
+exports.getSecret = function (req, res) {
+  return res.json({secret: 'I am secret Message'})
+}
+
 exports.getMeetups = function(req, res) {
   Meetup.find({})
         .populate('category')
@@ -29,4 +33,22 @@ exports.getMeetupById = function(req, res) {
 
     return res.json(meetup);
   });
+}
+
+// Create Meetup
+exports.createMeetup = function(req, res) {
+  const meetupData = req.body;
+  const user = req.user;
+
+  const meetup = new Meetup(meetupData);
+  meetup.user = user;
+  meetup.status = 'active';
+
+  meetup.save((errors, createdMeetup) => {
+    if (errors) {
+      return res.status(422).send({errors});
+    }
+
+    return res.json(createdMeetup)
+  })
 }
