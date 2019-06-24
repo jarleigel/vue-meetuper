@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <ErrorView :title="'Ojojoj siden du prøver å nå finnes ikke...'"
+    <ErrorView :title="'Ooooops, page you are trying to access doesn\'t exist'"
                :status="'404'"
                :navigateToPage="'PageHome'"
                :navigateToText="'Navigate back Home'" />

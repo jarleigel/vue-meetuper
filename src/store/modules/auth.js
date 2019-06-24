@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import axios from 'axios'
 import jwt from 'jsonwebtoken'
 import axiosInstance from '@/services/axios'
@@ -9,6 +10,7 @@ function checkTokenValidity (token) {
 
     return decodedToken && (decodedToken.exp * 1000) > new Date().getTime()
   }
+
   return false
 }
 
@@ -24,10 +26,19 @@ export default {
     },
     isAuthenticated (state) {
       return !!state.user
+    },
+    isMeetupOwner: (state) => (meetupCreatorId) => {
+      if (!state.user) return false
+      return state.user._id === meetupCreatorId
+    },
+    isMember: (state) => (meetupId) => {
+      return state.user &&
+             state.user['joinedMeetups'] &&
+             state.user['joinedMeetups'].includes(meetupId)
     }
   },
   actions: {
-    loginWithEmailAndPassword({commit}, userData) {
+    loginWithEmailAndPassword ({commit}, userData) {
       return axios.post('/api/v1/users/login', userData)
         .then(res => {
           const user = res.data
@@ -38,9 +49,10 @@ export default {
     },
     registerUser (context, userData) {
       return axios.post('/api/v1/users/register', userData)
-      .catch(err => rejectError(err))
-    },   
-    logout  ({commit}) {
+        .catch(err => rejectError(err))
+    },
+    logout ({commit}) {
+      // For Session Authnetication !
       // return axios.post('/api/v1/users/logout')
       //   .then(() => {
       //     commit('setAuthUser', null)
@@ -49,6 +61,7 @@ export default {
       //   .catch(err => {
       //     return err
       //   })
+
       return new Promise((resolve) => {
         localStorage.removeItem('meetuper-jwt')
         commit('setAuthUser', null)
@@ -59,15 +72,15 @@ export default {
       const authUser = getters['authUser']
       const token = localStorage.getItem('meetuper-jwt')
       const isTokenValid = checkTokenValidity(token)
-      if (authUser && isTokenValid) {
-        return Promise.resolve(authUser)
-      }
+
+      if (authUser && isTokenValid) { return Promise.resolve(authUser) }
+
       const config = {
         headers: {
           'Cache-Control': 'no-cache'
-          
         }
       }
+
       return axiosInstance.get('/api/v1/users/me', config)
         .then((res) => {
           const user = res.data
@@ -81,6 +94,25 @@ export default {
           commit('setAuthState', true)
           return err
         })
+    },
+    addMeetupToAuthUser ({commit, state}, meetupId) {
+      const userMeetups = [...state.user['joinedMeetups'], meetupId]
+      commit('setMeetupsToAuthUser', userMeetups)
+    },
+    removeMeetupFromAuthUser ({commit, state}, meetupId) {
+      const userMeetupsIds = [...state.user['joinedMeetups']]
+      const index = userMeetupsIds.findIndex(userMeetupId => userMeetupId === meetupId)
+
+      userMeetupsIds.splice(index, 1)
+      commit('setMeetupsToAuthUser', userMeetupsIds)
+    },
+    updateUser ({commit}, user) {
+      return axiosInstance.patch(`/api/v1/users/${user._id}`, user)
+        .then(res => {
+          const updatedUser = res.data
+          commit('setAuthUser', updatedUser)
+          return updatedUser
+        })
     }
   },
   mutations: {
@@ -89,6 +121,9 @@ export default {
     },
     setAuthState (state, authState) {
       return state.isAuthResolved = authState
+    },
+    setMeetupsToAuthUser (state, meetups) {
+      return Vue.set(state.user, 'joinedMeetups', meetups)
     }
   }
 }

@@ -1,9 +1,9 @@
 <template>
-  <div v-if="isAuthResolved" id="app">
+  <div v-if="isAuthResolved && isLocationResolved" id="app">
     <TheNavbar />
-      <div class="page-wrapper">
-        <router-view />
-      </div>
+    <div class="page-wrapper">
+      <router-view :key="$route.path" />
+    </div>
     <TheFooter />
   </div>
 </template>
@@ -20,7 +20,13 @@ export default {
   computed: {
     isAuthResolved () {
       return this.$store.state.auth.isAuthResolved
+    },
+    isLocationResolved () {
+      return this.$store.state.meta.isLocationResolved
     }
+  },
+  created () {
+    this.$store.dispatch('meta/fetchMetaData')
   }
 }
 </script>
@@ -28,18 +34,15 @@ export default {
 <style lang="scss">
 @import 'assets/css/spacing.css';
 @import '~bulma/bulma.sass';
-
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
 }
-
 .page-wrapper {
   min-height: 55vh;
 }
-
 .bold {
   font-weight: bold;
 }

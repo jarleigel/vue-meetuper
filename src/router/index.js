@@ -6,9 +6,12 @@ import PageHome from '@/pages/PageHome'
 import PageMeetupDetail from '@/pages/PageMeetupDetail'
 import PageMeetupFind from '@/pages/PageMeetupFind'
 import PageMeetupCreate from '@/pages/PageMeetupCreate'
+import PageMeetupEdit from '@/pages/PageMeetupEdit'
 import PageLogin from '@/pages/PageLogin'
 import PageRegister from '@/pages/PageRegister'
 import PageSecret from '@/pages/PageSecret'
+import PageProfile from '@/pages/PageProfile'
+
 import PageNotFound from '@/pages/PageNotFound'
 import PageNotAuthenticated from '@/pages/PageNotAuthenticated'
 
@@ -22,9 +25,21 @@ const router = new Router({
       component: PageHome
     },
     {
+      path: '/find/:category',
+      name: 'PageMeetupFindCategory',
+      component: PageMeetupFind,
+      props: true
+    },
+    {
       path: '/find',
       name: 'PageMeetupFind',
       component: PageMeetupFind
+    },
+    {
+      path: '/me',
+      name: 'PageProfile',
+      component: PageProfile,
+      meta: {onlyAuthUser: true}
     },
     {
       path: '/meetups/new',
@@ -42,6 +57,13 @@ const router = new Router({
       path: '/meetups/:id',
       name: 'PageMeetupDetail',
       component: PageMeetupDetail
+    },
+    {
+      path: '/meetups/:meetupId/edit',
+      name: 'PageMeetupEdit',
+      component: PageMeetupEdit,
+      meta: {onlyAuthUser: true},
+      props: true
     },
     {
       path: '/login',
@@ -69,10 +91,12 @@ const router = new Router({
   mode: 'history'
 })
 
+
 router.beforeEach((to, from, next) => {
   store.dispatch('auth/getAuthUser')
     .then(() => {
       const isAuthenticated = store.getters['auth/isAuthenticated']
+
       if (to.meta.onlyAuthUser) {
         if (isAuthenticated) {
           next()
@@ -91,5 +115,10 @@ router.beforeEach((to, from, next) => {
     })
 })
 
-export default router
 
+
+
+
+
+
+export default router
